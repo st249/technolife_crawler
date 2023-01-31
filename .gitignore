@@ -139,3 +139,5 @@ src/MyCompanyName.AbpZeroTemplate.Web.Public/node_modules
 /src/BookHouse.VBookStore.Web.Host/Uploads/Tickets
 /src/BookHouse.VBookStore.Web.Host/healthchecksdb.*
 ./.idea/*
+
+.idea/

@@ -15,24 +15,22 @@ namespace TechnoligeCrawler.Application.BackgroundServices;
 public class StoredLaptopProductsJob : StoreProductsJobs
 {
     private readonly StoreLaptopProductJobConfigurations _conf;
-    private readonly ILaptopDetailPageParser _laptopDetailPageParser;
-    private readonly IHtmlManager _htmlManager;
-    private readonly IPublishEndpoint _publisher;
-    public StoredLaptopProductsJob(Serilog.ILogger logger, IServiceProvider services, IOptions<StoreLaptopProductJobConfigurations> conf, IProductListPageParser productListPageParser, ILaptopDetailPageParser laptopDetailPageParser,
-        IHtmlManager htmlManager, IProductRepository productRepo, IPublishEndpoint publisher) :
-        base(logger, services, productListPageParser, productRepo)
+    public StoredLaptopProductsJob(Serilog.ILogger logger, IServiceProvider services, IOptions<StoreLaptopProductJobConfigurations> conf) :
+        base(logger, services)
     {
         _conf = conf.Value;
-        _laptopDetailPageParser = laptopDetailPageParser;
-        _htmlManager = htmlManager;
-        _publisher = publisher;
     }
 
 
     protected async override Task<HtmlDocument> LoadDocumentWithPageNumber(int page)
     {
-        var requestUrl = $"{_conf.BaseUrl}/{_conf.ProductListUrl}&page={page}";
-        return await _htmlManager.DownloadHtmlDocumentFromUrl(requestUrl);
+        using (var scoped = _services.CreateScope())
+        {
+            IHtmlManager htmlManager = scoped.ServiceProvider.GetRequiredService<IHtmlManager>();
+            var requestUrl = $"{_conf.BaseUrl}/{_conf.ProductListUrl}&page={page}";
+            return await htmlManager.DownloadHtmlDocumentFromUrl(requestUrl);
+        }
+
     }
 
     protected override string GetCronExpression()
@@ -46,6 +44,10 @@ public class StoredLaptopProductsJob : StoreProductsJobs
         {
             ProductItem = productItem
         };
-        await _publisher.Publish(foundedNewProductEvent);
+        using (var scoped = _services.CreateScope())
+        {
+            IPublishEndpoint publisher = scoped.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+            await publisher.Publish(foundedNewProductEvent);
+        }
     }
 }

@@ -10,10 +10,10 @@ public class Product
     public string ImageAddress { get; private set; }
     public decimal Price { get; private set; }
     public string Brand { get; set; }
-    public ProductFeatures ProductFeatures { get; private set; }
+    public ICollection<ProductFeature> ProductFeatures { get; private set; }
     public ProductCategory Category { get; private set; }
 
-    public Product(int technolifeId, string title, string imageAddress, decimal price, string brand, ProductFeatures productFeatures, ProductCategory category)
+    public Product(int technolifeId, string title, string imageAddress, decimal price, string brand, ICollection<ProductFeature> productFeatures, ProductCategory category)
     {
         Id = Guid.NewGuid();
         CreationTime = DateTime.Now;
@@ -25,4 +25,5 @@ public class Product
         ProductFeatures = productFeatures;
         Category = category;
     }
+    private Product() { }
 }

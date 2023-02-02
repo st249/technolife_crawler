@@ -8,16 +8,14 @@ namespace TechnolifeCrawler.Application.BackgroundServices
 {
     public abstract class StoreProductsJobs : ScheduledBackgroundService
     {
-        private readonly IProductListPageParser _pageParser;
-        private readonly IProductRepository _productRepo;
-        protected StoreProductsJobs(Serilog.ILogger logger, IServiceProvider services, IProductListPageParser pageParser, IProductRepository productRepo) : base(logger, services)
+        protected StoreProductsJobs(Serilog.ILogger logger, IServiceProvider services) : base(logger, services)
         {
-            _pageParser = pageParser;
-            _productRepo = productRepo;
+
         }
 
         protected async override Task ExecuteAsync(IServiceScope scope, CancellationToken cancellationToken)
         {
+            _logger.Debug("Starting importing products from technolife");
             var hasNewData = true;
             var page = 1;
             do
@@ -48,14 +46,24 @@ namespace TechnolifeCrawler.Application.BackgroundServices
 
         protected async virtual Task<List<ProductListItemDto>> GetNewProducts(HtmlDocument doc)
         {
-            var products = await _pageParser.ParseAsync(doc);
-            var result = new List<ProductListItemDto>();
-            foreach (var product in products)
+            using (var scope = _services.CreateScope())
             {
-                if (!await _productRepo.IsProductExistsAsync(product.Id))
-                    result.Add(product);
+                IProductListPageParser scopedProductListPageParser =
+                scope.ServiceProvider.GetRequiredService<IProductListPageParser>();
+
+                IProductRepository scopedProductRepo =
+                    scope.ServiceProvider.GetRequiredService<IProductRepository>();
+                var products = scopedProductListPageParser.Parse(doc);
+                var result = new List<ProductListItemDto>();
+                foreach (var product in products)
+                {
+                    if (!await scopedProductRepo.IsProductExistsAsync(product.Id))
+                        result.Add(product);
+                }
+                return result;
+
             }
-            return result;
+
         }
     }
 }

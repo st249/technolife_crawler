@@ -1,10 +1,11 @@
+using TechnolifeCrawler.Models.Enums;
+
 namespace TechnoligeCrawler.Models.BaseModels;
-public class ProductFeatures
+public class ProductFeature
 {
+    public Guid Id { get; set; }    
     public Product Product { get; set; }
-
-    public Size Size { get; set; }
-
-    public int Weight { get; set; }
+    public FeatureKey Key { get; set; }
+    public string Value { get; set; }
 
 }

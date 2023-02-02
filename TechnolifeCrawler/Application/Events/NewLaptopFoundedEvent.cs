@@ -47,7 +47,8 @@ public class NewLaptopFoundedEventHandler : IConsumer<NewLaptopFoundedEvent>
         }
         var requestUrl = $"{_conf.BaseUrl}/product-{productItem.Id}/product";
         var htmlDoc = await _htmlManager.DownloadHtmlDocumentFromUrl(requestUrl);
-        var laptopDetailDto = await _laptopDetailPageParser.ParseAsync(htmlDoc);
+        var parsedDetail = _laptopDetailPageParser.Parse(htmlDoc);
+        
         var newLaptop = ProductFactory.CreateLaptop(productItem.Id, productItem.Title, productItem.ImageAddress, 0, "", null);
         await _productRepo.InserNewProductAsync(newLaptop);
         await _operationLockManager.ReleaseLockAsync(lockKey);

@@ -7,6 +7,4 @@ public class ProductFeatures
 
     public int Weight { get; set; }
 
-    public string Brand { get; set; }
-
 }

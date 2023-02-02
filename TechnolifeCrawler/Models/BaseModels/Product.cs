@@ -1,9 +1,28 @@
+using TechnolifeCrawler.Models.Enums;
+
 namespace TechnoligeCrawler.Models.BaseModels;
 public class Product
 {
-    public int Id { get; set; }
-    public string Title { get; set; }
-    public string ImageAddress { get; set; }
-    public decimal Price { get; set; }
-    public ProductFeatures ProductFeatures { get; set; }
+    public Guid Id { get; private set; }
+    public DateTime CreationTime { get; private set; }
+    public int TechnolifeId { get; private set; }
+    public string Title { get; private set; }
+    public string ImageAddress { get; private set; }
+    public decimal Price { get; private set; }
+    public string Brand { get; set; }
+    public ProductFeatures ProductFeatures { get; private set; }
+    public ProductCategory Category { get; private set; }
+
+    public Product(int technolifeId, string title, string imageAddress, decimal price, string brand, ProductFeatures productFeatures, ProductCategory category)
+    {
+        Id = Guid.NewGuid();
+        CreationTime = DateTime.Now;
+        TechnolifeId = technolifeId;
+        Title = title;
+        ImageAddress = imageAddress;
+        Price = price;
+        Brand = brand;
+        ProductFeatures = productFeatures;
+        Category = category;
+    }
 }

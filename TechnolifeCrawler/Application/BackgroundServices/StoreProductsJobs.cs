@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using System.Drawing;
 using TechnolifeCrawler.Abstractions.DataAccess.Repositories;
 using TechnolifeCrawler.Abstractions.Utilities;
 using TechnolifeCrawler.Models.Dtos;
@@ -8,6 +9,7 @@ namespace TechnolifeCrawler.Application.BackgroundServices
 {
     public abstract class StoreProductsJobs : ScheduledBackgroundService
     {
+        protected const int _pageSize = 32;
         protected StoreProductsJobs(Serilog.ILogger logger, IServiceProvider services) : base(logger, services)
         {
 
@@ -20,50 +22,47 @@ namespace TechnolifeCrawler.Application.BackgroundServices
             var page = 1;
             do
             {
-                HtmlDocument doc = await LoadDocumentWithPageNumber(page);
 
-                List<ProductListItemDto> newProducts = await GetNewProducts(doc);
+                List<TechnolifeSmallProduct> newProducts = await GetNewProducts(page);
 
                 if (!newProducts.Any())
                 {
                     hasNewData = false;
-                    break;
                 }
-
-                foreach (var productItem in newProducts)
+                else
                 {
-                    await CreateNewProduct(productItem);
+                    foreach (var productItem in newProducts)
+                    {
+                        await CreateNewProduct(productItem);
+                    }
                 }
-
                 page++;
 
             } while (hasNewData == true);
         }
 
-        protected abstract Task<HtmlDocument> LoadDocumentWithPageNumber(int page);
+        protected abstract Task CreateNewProduct(TechnolifeSmallProduct productItem);
 
-        protected abstract Task CreateNewProduct(ProductListItemDto productItem);
-
-        protected async virtual Task<List<ProductListItemDto>> GetNewProducts(HtmlDocument doc)
+        protected async virtual Task<List<TechnolifeSmallProduct>> GetNewProducts(int page)
         {
-            using (var scope = _services.CreateScope())
+            var result = new List<TechnolifeSmallProduct>();
+            var productList = await GetPagedListFromTechnolife(page);
+            using (var scoped = _services.CreateScope())
             {
-                IProductListPageParser scopedProductListPageParser =
-                scope.ServiceProvider.GetRequiredService<IProductListPageParser>();
-
-                IProductRepository scopedProductRepo =
-                    scope.ServiceProvider.GetRequiredService<IProductRepository>();
-                var products = scopedProductListPageParser.Parse(doc);
-                var result = new List<ProductListItemDto>();
-                foreach (var product in products)
+                var scopedProductRepo = scoped.ServiceProvider.GetRequiredService<IProductRepository>();
+                foreach (var smallProduct in productList)
                 {
-                    if (!await scopedProductRepo.IsProductExistsAsync(product.Id))
-                        result.Add(product);
+                    if (!await scopedProductRepo.IsProductExistsAsync(smallProduct.Id))
+                    {
+                        result.Add(smallProduct);
+                    }
                 }
                 return result;
 
             }
-
         }
+
+        protected abstract Task<List<TechnolifeSmallProduct>> GetPagedListFromTechnolife(int page);
+
     }
 }

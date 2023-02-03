@@ -22,8 +22,33 @@ namespace TechnolifeCrawler.Infrastructure.Utilities
         {
             var result = new LaptopDetailDto();
 
-            var featuresContainer = doc.DocumentNode.Descendants().Where(e => e.Id == _conf.DetailContainerDivId);
-            return null;
+            var featuresContainer = doc.DocumentNode.Descendants().Where(e => e.Id == _conf.DetailContainerDivId).First();
+
+            var features = featuresContainer.ChildNodes.Where(e => e.Name == "li");
+
+            GetWeight(result, features);
+
+        }
+
+        private static void GetWeight(LaptopDetailDto result, IEnumerable<HtmlNode> features)
+        {
+            foreach (var feature in features)
+            {
+                var featureTitle = feature.ChildNodes.Where(e => e.Name == "div")
+                    .First().InnerText;
+                if (featureTitle == "وزن")
+                {
+                    var weight = feature.ChildNodes.Where(e => e.Name == "div")
+                     .Last().InnerText;
+                    result.ProductFeatures.Add(new TechnoligeCrawler.Models.BaseModels.ProductFeature()
+                    {
+                        Id = Guid.NewGuid(),
+                        Key = Models.Enums.FeatureKey.Laptop_Weight,
+                        Value = weight
+                    });
+                    break;
+                }
+            }
         }
     }
 }
